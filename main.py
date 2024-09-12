@@ -39,6 +39,8 @@ class zhihuishu_class:
         print("——————正在初始化浏览器——————")
         # 初始化 Edge WebDriver
         driver = webdriver.Edge()
+
+
         self.driver = driver
         self.error_printed = False#错误信息是否已打印
 
@@ -114,6 +116,9 @@ class zhihuishu_class:
 
     def watch_video(self,watch_time):
         time.sleep(1)
+        #防止元素无法被查找到
+        script = "document.body.style.zoom='75%'"
+        self.driver.execute_script(script)
         for i in range(5):#防止页面未刷新完全
             try:
                 start_tip = self.driver.find_element(By.XPATH, "//i[@class='iconfont iconguanbi']") # 开屏提示
