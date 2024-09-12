@@ -49,10 +49,8 @@ def yidun(driver):
     br = (tl[0] + tw, tl[1] + th)  # 右下角点的坐标
     cv2.rectangle(b_img, tl, br, (0, 0, 255), 2)  # 绘制矩形
     cv2.imwrite("out.png", b_img)  # 保存在本地
-    x = tl[0]+8#制作偏移（？
-    print('x:',x)
-
-
+    x = tl[0]+10#制作偏移（？
+    #print('x:',x)
     # 定位到滑块
     ele = driver.find_element(By.XPATH,"//div[contains(@class,'yidun_slider')]")
     # 实例化对象
