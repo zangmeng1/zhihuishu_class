@@ -43,6 +43,7 @@ class zhihuishu_class:
 
 
     def login(self,username, password):
+        self.username=username
         print("开始登录智慧树")
         self.driver.get("https://passport.zhihuishu.com/login?service=https://onlineservice-api.zhihuishu.com/gateway/f/v1/login/gologin#signin")
         print("等待输入账密登录")
@@ -88,16 +89,17 @@ class zhihuishu_class:
     def get_class_info(self):
         print("开始定位课程")
         write_log("开始定位课程")
+        time.sleep(5)
         # 获取课程列表
         try:
             all_class_line = self.driver.find_elements(By.XPATH,f"//div[@class='item-left-course']")
-            time.sleep(3)
+            print(f"共找到{len(all_class_line)}个课程")
             first_class_info=all_class_line[0].text
             first_class_info_list=first_class_info.split('\n')
             print_true(f"课程名:{first_class_info_list[0]} {first_class_info_list[-1]}")
             write_log(f"课程名:#{first_class_info_list[0]}# {first_class_info_list[-1]}")
             all_class_line[0].click()
-            time.sleep(5)
+            time.sleep(10)
             return True
         except:
             print_error("未找到有效课程")
@@ -106,8 +108,15 @@ class zhihuishu_class:
 
 
     def watch_video(self,watch_time):
+        try:
+            start_tip = self.driver.find_element(By.XPATH, "//i[@class='iconfont iconguanbi']") # 开屏提示
+            start_tip.click()
+            print("关闭开屏提示")
+        except:
+            print("未找到开屏提示")
         end_time = time.time()+watch_time
         print_true(f"开始观看视频,时长:{watch_time}s")
+        time.sleep(3)
         while end_time >= time.time():
             time.sleep(1)
             #获取当前播放状态的一些信息
@@ -131,9 +140,20 @@ class zhihuishu_class:
                 if currentTime == duration:#当前视频播放完成
                     print("当前视频播放完成，即将自动切换下一个视频")
                     write_log("切换视频")
-                    switch_video=self.driver.find_element(By.XPATH, "//div[@id='nextBtn']")#下一集按钮
-                    print(switch_video)
-                    switch_video.click()
+                    video_list=self.driver.find_elements(By.XPATH, "//li[contains(@class,'clearfix video')]")#下一集按钮
+                    for i,video in enumerate(video_list):
+                        print(i,video)
+                        if video.get_attribute('class') == 'clearfix video current_play':
+                            if i+1 < len(video_list):#下一集存在
+                                video_list[i+1].click()
+                                print("完成视频切换")
+                                break
+                            else:
+                                print_error("已到达最后一集，无法切换")
+                                print_true("本账号视频已全部播放完成")
+                                write_log(f"#{self.username}#所有视频播放完成")
+                                return
+
                 elif stop.get_attribute('style') != 'display: none;':#视频暂停时的处理
                     print("当前视频已暂停，即将自动播放")
                     write_log("自动播放视频")
@@ -157,7 +177,6 @@ if __name__ == "__main__":
             print_error(f"#{username}#登录账号发生错误")
             print("运行下一账号")
             continue
-        input("调试用暂停")
         # 定位课程
         if zhihuishu.get_class_info():
             print_true("课程定位成功")
@@ -167,12 +186,8 @@ if __name__ == "__main__":
             print("运行下一账号")
             continue
 
-
-        input("调试用暂停")
         zhihuishu.watch_video(27*60)
 
-
-        input("调试用暂停")
         print_true(f"#{username}#完成每日刷课！")
         write_log(f'#{username}#完成每日刷课！')
 
