@@ -165,31 +165,33 @@ if __name__ == "__main__":
     with open('users.json', 'r') as file:
         data = json.load(file)
     user_json=data
-    # 提取和打印键值对
-    for username, password in user_json.items():
-        zhihuishu = zhihuishu_class()
-        # 登录
-        try:
-            zhihuishu.login(username, password)
-        except Exception as e:
-            write_log(f'**ERROR**#{username}#登录账号发生错误')
-            print_error(f"#{username}#登录账号发生错误")
-            print("运行下一账号")
-            continue
-        # 定位课程
-        if zhihuishu.get_class_info():
-            print_true("课程定位成功")
-        else:
-            write_log(f'**ERROR**#{username}#查询课程发生错误')
-            print_error(f"#{username}#查询课程发生错误")
-            print("运行下一账号")
-            continue
-        try:
-            zhihuishu.watch_video(27*60)
-        except:
-            write_log(f'**ERROR**#{username}#观看视频发生错误')
-            print_error(f"#{username}#观看视频发生错误")
-        print_true(f"#{username}#完成每日刷课！")
-        write_log(f'#{username}#完成每日刷课！')
+    while user_json != {}:#直到所有用户都完成
+        # 提取和打印键值对
+        for username, password in user_json.items():
+            zhihuishu = zhihuishu_class()
+            # 登录
+            try:
+                zhihuishu.login(username, password)
+            except Exception as e:
+                write_log(f'**ERROR**#{username}#登录账号发生错误')
+                print_error(f"#{username}#登录账号发生错误")
+                print("运行下一账号")
+                continue
+            # 定位课程
+            if zhihuishu.get_class_info():
+                print_true("课程定位成功")
+            else:
+                write_log(f'**ERROR**#{username}#查询课程发生错误')
+                print_error(f"#{username}#查询课程发生错误")
+                print("运行下一账号")
+                continue
+            try:
+                zhihuishu.watch_video(27*60)
+                del user_json[username]#去除完成用户
+            except:
+                write_log(f'**ERROR**#{username}#观看视频发生错误')
+                print_error(f"#{username}#观看视频发生错误")
+            print_true(f"#{username}#完成每日刷课！")
+            write_log(f'#{username}#完成每日刷课！')
 
 
