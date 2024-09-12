@@ -4,6 +4,7 @@ import os
 import time
 
 import pyautogui
+from selenium.webdriver import Keys
 
 from yidun import yidun
 from selenium import webdriver
@@ -133,9 +134,7 @@ class zhihuishu_class:
                         xuanxiang.click()
                 time.sleep(1)
                 print('已选择,开始关闭题目')
-                close_topic=self.driver.find_element(By.XPATH, "//button[@aria-label='close']") #关闭按钮（右上
-                print(close_topic)
-                close_topic.click()
+                webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
             except:
                 if currentTime == duration:#当前视频播放完成
                     print("当前视频播放完成，即将自动切换下一个视频")
@@ -185,9 +184,11 @@ if __name__ == "__main__":
             print_error(f"#{username}#查询课程发生错误")
             print("运行下一账号")
             continue
-
-        zhihuishu.watch_video(27*60)
-
+        try:
+            zhihuishu.watch_video(27*60)
+        except:
+            write_log(f'**ERROR**#{username}#观看视频发生错误')
+            print_error(f"#{username}#观看视频发生错误")
         print_true(f"#{username}#完成每日刷课！")
         write_log(f'#{username}#完成每日刷课！')
 
