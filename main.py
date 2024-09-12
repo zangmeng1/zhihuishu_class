@@ -90,7 +90,7 @@ class zhihuishu_class:
     def get_class_info(self):
         print("开始定位课程")
         write_log("开始定位课程")
-        time.sleep(5)
+        time.sleep(10)
         # 获取课程列表
         try:
             all_class_line = self.driver.find_elements(By.XPATH,f"//div[@class='item-left-course']")
@@ -117,7 +117,7 @@ class zhihuishu_class:
             print("未找到开屏提示")
         end_time = time.time()+watch_time
         print_true(f"开始观看视频,时长:{watch_time}s")
-        time.sleep(3)
+        time.sleep(10)
         while end_time >= time.time():
             time.sleep(1)
             #获取当前播放状态的一些信息
