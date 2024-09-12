@@ -62,13 +62,18 @@ class zhihuishu_class:
         print("提交登录完成")
         write_log("提交登录请求完成")
         time.sleep(1)
-        while True:
+        for i in range(10):#登陆部分最高执行10次
             try:
                 named=self.driver.find_element(By.XPATH, "//span[@class='user-logo_name']")
                 name=named.get_attribute('textContent')#提取标签对中文本
                 self.error_printed=True
-                if name !='':#防止网页还没刷新
-                    break
+                if name =='':#防止网页还没刷新
+                    time.sleep(1)#成功进入但信息未刷新
+                    continue
+                else:
+                    print_true(f"#{username}#登陆成功")
+                    write_log(f"#{username}#，登录成功")
+                    return True
             except:
                 try:
                     #易盾过多尝试会产生二次验证
@@ -88,9 +93,13 @@ class zhihuishu_class:
                 except:
                     print_error("提取验证码信息出错，等待30s，手动干预")
                     time.sleep(30)
-                time.sleep(0.5)
-        print_true(f"#{username}#登陆成功")
-        write_log(f"#{username}#，登录成功")
+                    #检测页面url（用户是否手动进行验证，成功跳转学堂
+                    current_url=self.driver.current_url
+                    if current_url in "https://www.zhihuishu.com/":
+                        self.driver.get("https://onlineweb.zhihuishu.com/onlinestuh5")
+
+                time.sleep(1)
+        return False
 
 
     def get_class_info(self):
@@ -164,7 +173,7 @@ class zhihuishu_class:
                                 print_true("本账号视频已全部播放完成")
                                 write_log(f"#{self.username}#所有视频播放完成")
                                 return
-                    time.sleep(3)#切换视频停顿
+                    time.sleep(5)#切换视频停顿
                 elif stop.get_attribute('style') != 'display: none;':#视频暂停时的处理
                     print("当前视频已暂停，即将自动播放")
                     write_log("自动播放视频")
@@ -181,13 +190,18 @@ if __name__ == "__main__":
     with open('users.json', 'r') as file:
         data = json.load(file)
     user_json=data
-    while user_json != {}:#直到所有用户都完成
-        # 提取和打印键值对
+    #直到所有用户都完成
+    while user_json != {}:    # 提取和打印键值对
         for username, password in user_json.items():
+            #创建浏览器
             zhihuishu = zhihuishu_class()
             # 登录
             try:
-                zhihuishu.login(username, password)
+                if not zhihuishu.login(username, password):
+                    write_log(f'**ERROR**#{username}#登录账号发生错误')
+                    print_error(f"#{username}#登录账号发生错误")
+                    print("运行下一账号")
+                    continue
             except Exception as e:
                 write_log(f'**ERROR**#{username}#登录账号发生错误')
                 print_error(f"#{username}#登录账号发生错误")
@@ -207,6 +221,7 @@ if __name__ == "__main__":
             except:
                 write_log(f'**ERROR**#{username}#观看视频发生错误')
                 print_error(f"#{username}#观看视频发生错误")
+
             print_true(f"#{username}#完成每日刷课！")
             write_log(f'#{username}#完成每日刷课！')
             zhihuishu.quit_web()#退出浏览器
