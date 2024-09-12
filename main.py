@@ -152,7 +152,7 @@ class zhihuishu_class:
                                 print_true("本账号视频已全部播放完成")
                                 write_log(f"#{self.username}#所有视频播放完成")
                                 return
-
+                    time.sleep(3)#切换视频停顿
                 elif stop.get_attribute('style') != 'display: none;':#视频暂停时的处理
                     print("当前视频已暂停，即将自动播放")
                     write_log("自动播放视频")
