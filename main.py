@@ -114,12 +114,15 @@ class zhihuishu_class:
 
     def watch_video(self,watch_time):
         time.sleep(1)
-        try:
-            start_tip = self.driver.find_element(By.XPATH, "//i[@class='iconfont iconguanbi']") # 开屏提示
-            start_tip.click()
-            print("关闭开屏提示")
-        except:
-            print("未找到开屏提示")
+        for i in range(5):#防止页面未刷新完全
+            try:
+                start_tip = self.driver.find_element(By.XPATH, "//i[@class='iconfont iconguanbi']") # 开屏提示
+                start_tip.click()
+                print("关闭开屏提示")
+                break
+            except:
+                print_error("未定位到开屏提示")
+                time.sleep(2)
         end_time = time.time()+watch_time
         print_true(f"开始观看视频,时长:{watch_time}s")
         time.sleep(10)
@@ -161,7 +164,7 @@ class zhihuishu_class:
                     print("当前视频已暂停，即将自动播放")
                     write_log("自动播放视频")
                     start_video=self.driver.find_element(By.XPATH, "//div[@class='videoArea']")#播放的整个显示页面（播放按钮有脚本检测
-                    ActionChains(self.driver).click(start_video).perform()
+                    start_video.click()
 
 
     def quit_web(self):
@@ -194,7 +197,7 @@ if __name__ == "__main__":
                 print("运行下一账号")
                 continue
             try:
-                zhihuishu.watch_video(27*60)
+                zhihuishu.watch_video(26*60)
                 del user_json[username]#去除完成用户
             except:
                 write_log(f'**ERROR**#{username}#观看视频发生错误')
