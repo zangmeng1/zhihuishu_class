@@ -109,6 +109,7 @@ class zhihuishu_class:
 
 
     def watch_video(self,watch_time):
+        time.sleep(1)
         try:
             start_tip = self.driver.find_element(By.XPATH, "//i[@class='iconfont iconguanbi']") # 开屏提示
             start_tip.click()
@@ -128,8 +129,8 @@ class zhihuishu_class:
                 self.driver.find_element(By.XPATH,"//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
                 print_error("出现题目弹窗")
                 write_log("**WARRING**出现题目弹窗,请注意时间")
-                xuanxiang_list = self.driver.find_element(By.XPATH, "//span[@class='topic-option-item']")  # 选项列表
-                for xuanxiang in xuanxiang_list:#这里有问题，脚本会自动选择b选项（好怪
+                xuanxiang_list = self.driver.find_elements(By.XPATH, "//span[@class='topic-option-item']")  # 选项列表
+                for xuanxiang in xuanxiang_list:
                     if xuanxiang.get_attribute('textContent') == 'A.':
                         xuanxiang.click()
                 time.sleep(1)
@@ -141,7 +142,6 @@ class zhihuishu_class:
                     write_log("切换视频")
                     video_list=self.driver.find_elements(By.XPATH, "//li[contains(@class,'clearfix video')]")#下一集按钮
                     for i,video in enumerate(video_list):
-                        print(i,video)
                         if video.get_attribute('class') == 'clearfix video current_play':
                             if i+1 < len(video_list):#下一集存在
                                 video_list[i+1].click()
