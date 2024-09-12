@@ -68,20 +68,24 @@ class zhihuishu_class:
                 if name !='':#防止网页还没刷新
                     break
             except:
-                #易盾过多尝试会产生二次验证
-                yidun_tip = self.driver.find_element(By.XPATH, "//span[@class='yidun_tips__text yidun-fallback__tip']")
-                yidun_tip_msg = yidun_tip.get_attribute('textContent')  # 提取标签对中文本
-                if yidun_tip_msg=='失败过多，点此重试':
-                    yidun_tip=self.driver.find_element(By.XPATH, "//div[@aria-live='polite']")
-                    yidun_tip.click()
-                else:
-                    print_error("网易易盾拦截,正在尝试破解,多次尝试请手动验证")
-                    yidun(self.driver)
-                    if not self.error_printed:#log只打印一次
-                        self.error_printed=True
-                        write_log('**WARRING**网易易盾拦截登录')
-                    else:#第二次自动行为将等待时间延长3s，用户可人为干预
-                        time.sleep(3)
+                try:
+                    #易盾过多尝试会产生二次验证
+                    yidun_tip = self.driver.find_element(By.XPATH, "//span[@class='yidun_tips__text yidun-fallback__tip']")
+                    yidun_tip_msg = yidun_tip.get_attribute('textContent')  # 提取标签对中文本
+                    if yidun_tip_msg=='失败过多，点此重试':
+                        yidun_tip=self.driver.find_element(By.XPATH, "//div[@aria-live='polite']")
+                        yidun_tip.click()
+                    else:
+                        print_error("网易易盾拦截,正在尝试破解")
+                        yidun(self.driver)
+                        if not self.error_printed:#log只打印一次
+                            self.error_printed=True
+                            write_log('**WARRING**网易易盾拦截登录')
+                        else:#第二次自动行为将等待时间延长3s
+                            time.sleep(3)
+                except:
+                    print_error("提取验证码信息出错，等待30s，手动干预")
+                    time.sleep(30)
                 time.sleep(0.5)
         print_true(f"#{username}#登陆成功")
         write_log(f"#{username}#，登录成功")
@@ -160,6 +164,10 @@ class zhihuishu_class:
                     ActionChains(self.driver).click(start_video).perform()
 
 
+    def quit_web(self):
+        self.driver.quit()
+
+
 if __name__ == "__main__":
     # 读取用户JSON文件
     with open('users.json', 'r') as file:
@@ -193,5 +201,6 @@ if __name__ == "__main__":
                 print_error(f"#{username}#观看视频发生错误")
             print_true(f"#{username}#完成每日刷课！")
             write_log(f'#{username}#完成每日刷课！')
+            zhihuishu.quit_web()#退出浏览器
 
 
