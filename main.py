@@ -219,12 +219,13 @@ if __name__ == "__main__":
             try:
                 zhihuishu.watch_video(26*60)
                 del user_json[username]#去除完成用户
+                print_true(f"#{username}#完成每日刷课！")
+                write_log(f'#{username}#完成每日刷课！')
             except Exception as e:
                 print_error(f"#{username}#观看视频发生错误\n",str(e).split("\n")[0])
                 write_log(f'**ERROR**#{username}#观看视频发生错误')
                 write_log(str(e).split("\n")[0])
-            print_true(f"#{username}#完成每日刷课！")
-            write_log(f'#{username}#完成每日刷课！')
+
             zhihuishu.quit_web()#退出浏览器
 
 
