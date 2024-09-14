@@ -126,7 +126,7 @@ class zhihuishu_class:
     def watch_video(self,watch_time):
         time.sleep(1)
         #防止元素无法被查找到
-        script = "document.body.style.zoom='75%'"
+        script = "document.body.style.zoom='50%'"#不同屏幕分辨率需要不同缩放
         self.driver.execute_script(script)
         for i in range(5):#防止页面未刷新完全
             try:
@@ -165,8 +165,12 @@ class zhihuishu_class:
                     for i,video in enumerate(video_list):
                         if video.get_attribute('class') == 'clearfix video current_play':
                             if i+1 < len(video_list):#下一集存在
-                                video_list[i+1].click()
-                                print("完成视频切换")
+                                try:
+                                    video_list[i+1].click()
+                                    print("完成视频切换")
+
+                                except:
+                                    print_error("视频切换失败")
                                 break
                             else:
                                 print_error("已到达最后一集，无法切换")
@@ -192,7 +196,7 @@ if __name__ == "__main__":
     user_json=data
     #直到所有用户都完成
     while user_json != {}:    # 提取和打印键值对
-        for username, password in user_json.items():
+        for username, password in list(user_json.items()):
             #创建浏览器
             zhihuishu = zhihuishu_class()
             # 登录
@@ -203,7 +207,8 @@ if __name__ == "__main__":
                     print("运行下一账号")
                     continue
             except Exception as e:
-                print_error(f"#{username}#登录账号发生错误\n",str(e).split("\n")[0])
+                error_msg = str(e).split('\n')[0]
+                print_error(f"#{username}#登录账号发生错误\n{error_msg}")
                 write_log(f'**ERROR**#{username}#登录账号发生错误')
                 write_log(str(e).split("\n")[0])
                 print("运行下一账号")
@@ -217,12 +222,13 @@ if __name__ == "__main__":
                 print("运行下一账号")
                 continue
             try:
-                zhihuishu.watch_video(26*60)
+                zhihuishu.watch_video(30*60)
                 del user_json[username]#去除完成用户
                 print_true(f"#{username}#完成每日刷课！")
                 write_log(f'#{username}#完成每日刷课！')
             except Exception as e:
-                print_error(f"#{username}#观看视频发生错误\n",str(e).split("\n")[0])
+                error_msg=str(e).split('\n')[0]
+                print_error(f"#{username}#观看视频发生错误\n{error_msg}")
                 write_log(f'**ERROR**#{username}#观看视频发生错误')
                 write_log(str(e).split("\n")[0])
 
