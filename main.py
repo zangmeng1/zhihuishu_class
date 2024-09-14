@@ -137,8 +137,15 @@ class zhihuishu_class:
             except:
                 print_error("未定位到开屏提示")
                 time.sleep(2)
+                yidun_window = self.driver.find_elements(By.XPATH, "//div[@class='yidun_popup--light yidun_popup yidun_popup--size-small']")  # 网易易盾
+                if yidun_window and "block" in yidun_window[0].get_attribute('style'):
+                    print_error("易盾拦截！(注：开屏出现易盾说明账号或设备问题很大！)")
+                    write_log(f"**WARRING**#{self.username}#开屏出现易盾,请注意账号和时间")
+                    self.driver.execute_script("arguments[0].style.display = 'none';", yidun_window[0])
+                    print("隐藏易盾")
         end_time = time.time()+watch_time
         print_true(f"开始观看视频,时长:{watch_time}s")
+        write_log(f"#{self.username}#开始观看视频")
         time.sleep(10)
         while end_time >= time.time():
             time.sleep(1)
@@ -146,8 +153,15 @@ class zhihuishu_class:
             currentTime = self.driver.find_element(By.XPATH, "//span[@class='currentTime']").get_attribute('textContent')#视频当前播放时长
             duration = self.driver.find_element(By.XPATH, "//span[@class='duration']").get_attribute('textContent')#视频总时长
             stop=self.driver.find_element(By.XPATH, "//div[@class='bigPlayButton pointer']")#暂停按钮
-            try:#优先弹窗题目处理
-                self.driver.find_element(By.XPATH,"//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
+
+            yidun_window = self.driver.find_elements(By.XPATH, "//div[@class='yidun_popup--light yidun_popup yidun_popup--size-small']")  # 网易易盾
+            if yidun_window and "block" in yidun_window[0].get_attribute('style'):
+                print_error("易盾拦截！")
+                write_log(f"**WARRING**#{self.username}#刷课出现易盾,请注意账号和时间")
+                self.driver.execute_script("arguments[0].style.display = 'none';", yidun_window[0])
+
+            topic_window=self.driver.find_elements(By.XPATH,"//div[@class='el-dialog__wrapper dialog-test']")#弹窗主体
+            if topic_window:
                 print_error("出现题目弹窗")
                 write_log("**WARRING**出现题目弹窗,请注意时间")
                 xuanxiang_list = self.driver.find_elements(By.XPATH, "//span[@class='topic-option-item']")  # 选项列表
@@ -155,42 +169,41 @@ class zhihuishu_class:
                     if xuanxiang.get_attribute('textContent') == 'A.':
                         xuanxiang.click()
                 time.sleep(1)
-                print('已选择,开始关闭题目')
+                print('已选择A选项,关闭题目')
                 webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
-            except:
-                if currentTime == duration:#当前视频播放完成
-                    print("当前视频播放完成，即将自动切换下一个视频")
-                    write_log("切换视频")
-                    video_list=self.driver.find_elements(By.XPATH, "//li[contains(@class,'clearfix video')]")#下一集按钮
-                    for i,video in enumerate(video_list):
-                        if video.get_attribute('class') == 'clearfix video current_play':
-                            if i+1 < len(video_list):#下一集存在
-                                try:
-                                    video_list[i+1].click()
-                                    print("完成视频切换")
 
-                                except:
-                                    print_error("视频切换失败,开始重定向")
-                                    gundong = self.driver.find_elements(By.XPATH, "//div[@class='el-scrollbar__wrap']")[1]
-                                    self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight",gundong)
-                                    time.sleep(1)
-                                    # 找到目标元素（容器中的元素，例如带有 "特色词条" 文本的元素）
-                                    target_element = gundong.find_element(By.XPATH,".//li[@class='clearfix video current_play']")
-                                    # 使用JavaScript滚动到该元素，使其在容器中可见
-                                    self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});",target_element)
-                                    print("已滚动到最新视频")
-                                break
-                            else:
-                                print_error("已到达最后一集，无法切换")
-                                print_true("本账号视频已全部播放完成")
-                                write_log(f"#{self.username}#所有视频播放完成")
-                                return
-                    time.sleep(5)#切换视频停顿
-                elif stop.get_attribute('style') != 'display: none;':#视频暂停时的处理
-                    print("当前视频已暂停，即将自动播放")
-                    write_log("自动播放视频")
-                    start_video=self.driver.find_element(By.XPATH, "//div[@class='videoArea']")#播放的整个显示页面（播放按钮有脚本检测
-                    start_video.click()
+            if currentTime == duration:#当前视频播放完成
+                print("当前视频播放完成，即将自动切换下一个视频")
+                #遍历
+                video_list=self.driver.find_elements(By.XPATH, "//li[contains(@class,'clearfix video')]")#下一集按钮
+                for i,video in enumerate(video_list):
+                    if video.get_attribute('class') == 'clearfix video current_play':
+                        if i+1 < len(video_list):#下一集存在
+                            try:
+                                video_list[i+1].click()
+                                write_log("切换视频")
+                                print("完成视频切换")
+                            except:
+                                print_error("视频切换失败,开始重定向")
+                                gundong = self.driver.find_elements(By.XPATH, "//div[@class='el-scrollbar__wrap']")[1]
+                                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight",gundong)
+                                time.sleep(1)
+                                # 找到目标元素（容器中的元素，例如带有 "特色词条" 文本的元素）
+                                target_element = gundong.find_element(By.XPATH,".//li[@class='clearfix video current_play']")
+                                # 使用JavaScript滚动到该元素，使其在容器中可见
+                                self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});",target_element)
+                                print("已滚动到最新视频")
+                            break
+                        else:
+                            print_error("已到达最后一集，无法切换")
+                            print_true("本账号视频已全部播放完成")
+                            write_log(f"#{self.username}#所有视频播放完成")
+                            return
+                time.sleep(5)#切换视频停顿
+            elif stop.get_attribute('style') != 'display: none;':#视频暂停时的处理
+                print("当前视频已暂停，即将自动播放")
+                start_video=self.driver.find_element(By.XPATH, "//div[@class='videoArea']")#播放点击的整个显示页面（播放按钮需要显示进度条
+                start_video.click()
 
 
     def quit_web(self):
