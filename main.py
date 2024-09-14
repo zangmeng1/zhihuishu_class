@@ -170,7 +170,15 @@ class zhihuishu_class:
                                     print("完成视频切换")
 
                                 except:
-                                    print_error("视频切换失败")
+                                    print_error("视频切换失败,开始重定向")
+                                    gundong = self.driver.find_elements(By.XPATH, "//div[@class='el-scrollbar__wrap']")[1]
+                                    self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight",gundong)
+                                    time.sleep(1)
+                                    # 找到目标元素（容器中的元素，例如带有 "特色词条" 文本的元素）
+                                    target_element = gundong.find_element(By.XPATH,".//li[@class='clearfix video current_play']")
+                                    # 使用JavaScript滚动到该元素，使其在容器中可见
+                                    self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});",target_element)
+                                    print("已滚动到最新视频")
                                 break
                             else:
                                 print_error("已到达最后一集，无法切换")
