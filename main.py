@@ -147,6 +147,22 @@ class zhihuishu_class:
         print_true(f"开始观看视频,时长:{watch_time}s")
         write_log(f"#{self.username}#开始观看视频")
         time.sleep(10)
+
+        #定位到最后一个已完成视频
+        print("开始定位到最后一个已完成视频")
+        gundong = self.driver.find_elements(By.XPATH, "//div[@class='el-scrollbar__wrap']")[1]
+        self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", gundong)
+        time.sleep(1)
+        # 找到目标元素
+        last_finish_class = gundong.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']")[-1]
+        # 使用JavaScript滚动到该元素，使其在容器中可见
+        self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});",last_finish_class)
+        cl_finish_viedo=gundong.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")[-1]
+        cl_finish_viedo.click()
+        print("已切换到最新视频")
+        time.sleep(1)
+
+        #正式开始
         while end_time >= time.time():
             time.sleep(1)
             #获取当前播放状态的一些信息
