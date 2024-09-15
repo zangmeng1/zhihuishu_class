@@ -43,6 +43,7 @@ class zhihuishu_class:
 
         self.driver = driver
         self.error_printed = False#错误信息是否已打印
+        self.yidun_printed = False  # 错误信息是否已打印
 
 
     def login(self,username, password):
@@ -173,7 +174,9 @@ class zhihuishu_class:
             yidun_window = self.driver.find_elements(By.XPATH, "//div[@class='yidun_popup--light yidun_popup yidun_popup--size-small']")  # 网易易盾
             if yidun_window and "block" in yidun_window[0].get_attribute('style'):
                 print_error("易盾拦截！")
-                write_log(f"**WARRING**#{self.username}#刷课出现易盾,请注意账号和时间")
+                if not self.yidun_printed:#每个账号仅记录日志一次
+                    write_log(f"**WARRING**#{self.username}#刷课出现易盾,请注意账号和时间（日志仅记录第一次出现）")
+                    self.yidun_printed=True
                 self.driver.execute_script("arguments[0].style.display = 'none';", yidun_window[0])
 
             topic_window=self.driver.find_elements(By.XPATH,"//div[@class='el-dialog__wrapper dialog-test']")#弹窗主体
@@ -181,12 +184,17 @@ class zhihuishu_class:
                 print_error("出现题目弹窗")
                 write_log("**WARRING**出现题目弹窗,请注意时间")
                 xuanxiang_list = self.driver.find_elements(By.XPATH, "//span[@class='topic-option-item']")  # 选项列表
-                for xuanxiang in xuanxiang_list:
-                    if xuanxiang.get_attribute('textContent') == 'A.':
-                        xuanxiang.click()
-                time.sleep(1)
-                print('已选择A选项,关闭题目')
-                webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+                try:#有时碰巧出现易盾拦截和弹窗同时出现导致弹窗无法点击
+                    for xuanxiang in xuanxiang_list:
+                        if xuanxiang.get_attribute('textContent') == 'A.':
+                            xuanxiang.click()
+                    time.sleep(1)
+                    print('已选择A选项,关闭题目')
+                    webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+                except Exception as e:
+                    error_msg = str(e).split('\n')[0]
+                    print_error(f"题目弹窗关闭发生错误,即将重试\n{error_msg}")
+                    continue
 
             if currentTime == duration:#当前视频播放完成
                 print("当前视频播放完成，即将自动切换下一个视频")
