@@ -166,6 +166,7 @@ class zhihuishu_class:
         self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});",
                                    last_finish_class)
         cl_finish_viedo = gundong.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")[-1]
+        time.sleep(1)
         cl_finish_viedo.click()
         print("已切换到最新视频")
         time.sleep(1)
@@ -302,7 +303,7 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     # 读取并打开文件
     config.read('config.ini', encoding='utf-8')
-
+    print(f"————每天{config.get('system', 'auto_time')}执行————")
     # 每天定时执行任务
     schedule.every().day.at(config.get('system', 'auto_time')).do(main_job)
 
