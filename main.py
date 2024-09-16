@@ -241,8 +241,13 @@ class zhihuishu_class:
                 time.sleep(5)  # 切换视频停顿
             elif stop.get_attribute('style') != 'display: none;':  # 视频暂停时的处理
                 print("当前视频已暂停，即将自动播放")
-                start_video = self.driver.find_element(By.XPATH, "//div[@class='videoArea']")  # 播放点击的整个显示页面（播放按钮需要显示进度条
-                start_video.click()
+                try:
+                    start_video = self.driver.find_element(By.XPATH, "//div[@class='videoArea']")  # 播放点击的整个显示页面（播放按钮需要显示进度条
+                    start_video.click()
+                except Exception as e:
+                    error_msg = str(e).split('\n')[0]
+                    print_error(f"自动播放点击出错,即将重试\n{error_msg}")
+                    continue
 
     def quit_web(self):
         self.driver.quit()
