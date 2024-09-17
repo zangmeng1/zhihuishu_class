@@ -120,7 +120,7 @@ class zhihuishu_class:
                 if class_name in one_class_info_list[0]:
                     print_true(f"课程名:{one_class_info_list[0]} {one_class_info_list[-1]}")
                     write_log(f"课程名:#{one_class_info_list[0]}# {one_class_info_list[-1]}")
-                    all_class_line[0].click()
+                    one_class.click()
                     break
             time.sleep(10)
             return True
@@ -156,6 +156,23 @@ class zhihuishu_class:
         time.sleep(10)
         finish_class=self.driver.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")
         if finish_class:
+            #这里如果上一次弹窗题目没处理干净会卡死，
+            topic_window = self.driver.find_elements(By.XPATH, "//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
+            if topic_window:
+                print_error("出现题目弹窗")
+                write_log("**WARRING**出现题目弹窗,请注意时间")
+                xuanxiang_list = self.driver.find_elements(By.XPATH, "//span[@class='topic-option-item']")  # 选项列表
+                try:  # 有时碰巧出现易盾拦截和弹窗同时出现导致弹窗无法点击
+                    for xuanxiang in xuanxiang_list:
+                        if xuanxiang.get_attribute('textContent') == 'A.':
+                            xuanxiang.click()
+                    time.sleep(1)
+                    print('已选择A选项,关闭题目')
+                    webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+                except Exception as e:
+                    error_msg = str(e).split('\n')[0]
+                    print_error(f"题目弹窗关闭发生错误\n{error_msg}")
+
             # 定位到最后一个已完成视频
             print("开始定位到最后一个已完成视频")
             gundong = self.driver.find_elements(By.XPATH, "//div[@class='el-scrollbar__wrap']")[1]
