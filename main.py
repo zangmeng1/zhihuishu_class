@@ -150,29 +150,31 @@ class zhihuishu_class:
                     write_log(f"**WARRING**#{self.username}#开屏出现易盾,请注意账号和时间")
                     self.driver.execute_script("arguments[0].style.display = 'none';", yidun_window[0])
                     print("隐藏易盾")
+
+                # 这里如果上一次弹窗题目没处理干净会卡死，
+                topic_window = self.driver.find_elements(By.XPATH,
+                                                         "//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
+                if topic_window:
+                    print_error("出现题目弹窗")
+                    write_log("**WARRING**出现题目弹窗,请注意时间")
+                    xuanxiang_list = self.driver.find_elements(By.XPATH,
+                                                               "//span[@class='topic-option-item']")  # 选项列表
+                    try:  # 有时碰巧出现易盾拦截和弹窗同时出现导致弹窗无法点击
+                        for xuanxiang in xuanxiang_list:
+                            if xuanxiang.get_attribute('textContent') == 'A.':
+                                xuanxiang.click()
+                        time.sleep(1)
+                        print('已选择A选项,关闭题目')
+                        webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+                    except Exception as e:
+                        error_msg = str(e).split('\n')[0]
+                        print_error(f"题目弹窗关闭发生错误\n{error_msg}")
         end_time = time.time() + self.watch_time*60
         print_true(f"开始观看视频,时长:{self.watch_time}min")
         write_log(f"#{self.username}#开始观看视频")
         time.sleep(10)
         finish_class=self.driver.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")
         if finish_class:
-            #这里如果上一次弹窗题目没处理干净会卡死，
-            topic_window = self.driver.find_elements(By.XPATH, "//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
-            if topic_window:
-                print_error("出现题目弹窗")
-                write_log("**WARRING**出现题目弹窗,请注意时间")
-                xuanxiang_list = self.driver.find_elements(By.XPATH, "//span[@class='topic-option-item']")  # 选项列表
-                try:  # 有时碰巧出现易盾拦截和弹窗同时出现导致弹窗无法点击
-                    for xuanxiang in xuanxiang_list:
-                        if xuanxiang.get_attribute('textContent') == 'A.':
-                            xuanxiang.click()
-                    time.sleep(1)
-                    print('已选择A选项,关闭题目')
-                    webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
-                except Exception as e:
-                    error_msg = str(e).split('\n')[0]
-                    print_error(f"题目弹窗关闭发生错误\n{error_msg}")
-
             # 定位到最后一个已完成视频
             print("开始定位到最后一个已完成视频")
             gundong = self.driver.find_elements(By.XPATH, "//div[@class='el-scrollbar__wrap']")[1]
@@ -272,6 +274,8 @@ class zhihuishu_class:
 
 
 def main_job():
+    global log_path
+    log_path = f'./log/{datetime.date.today()}.txt'
     # 读取用户JSON文件
     with open('users.json', 'r',encoding='utf-8') as file:
         data = json.load(file)
