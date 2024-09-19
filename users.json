@@ -1,12 +1,14 @@
 {
-   "è´¦å·1": {
-       "password": "",
-       "class_name": "",
-       "watch_time": 28
+   "ÕËºÅ1": {
+        "password": "ÃÜÂë",
+        "class_name": "",
+        "watch_time": 28,
+        "watch_live": 1
    },
-    "è´¦å·2": {
-       "password": "å¯†ç ",
-       "class_name": "å¿«ä¹å­¦è‹±è¯­|",
-       "watch_time": 30
+    "ÕËºÅ2": {
+        "password": "ÃÜÂë",
+        "class_name": "",
+        "watch_time": 28,
+        "watch_live": 1
    }
 }

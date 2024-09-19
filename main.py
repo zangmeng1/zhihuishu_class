@@ -104,8 +104,8 @@ class zhihuishu_class:
                 time.sleep(1)
         return False
 
-    def get_class_info(self,class_name):
-        self.driver.get("https://onlineweb.zhihuishu.com/onlinestuh5")#为多课程用户设置的重定向
+    def get_class_info(self, class_name):
+        self.driver.get("https://onlineweb.zhihuishu.com/onlinestuh5")  # 为多课程用户设置的重定向
         print("开始定位课程")
         write_log("开始定位课程")
         time.sleep(10)
@@ -113,7 +113,7 @@ class zhihuishu_class:
         try:
             all_class_line = self.driver.find_elements(By.XPATH, f"//div[@class='item-left-course']")
             print(f"共找到{len(all_class_line)}个课程")
-            #选择课程
+            # 选择课程
             for one_class in all_class_line:
                 one_class_info = one_class.text
                 one_class_info_list = one_class_info.split('\n')
@@ -150,7 +150,6 @@ class zhihuishu_class:
                     write_log(f"**WARRING**#{self.username}#开屏出现易盾,请注意账号和时间")
                     self.driver.execute_script("arguments[0].style.display = 'none';", yidun_window[0])
                     print("隐藏易盾")
-
                 # 这里如果上一次弹窗题目没处理干净会卡死，
                 topic_window = self.driver.find_elements(By.XPATH,
                                                          "//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
@@ -169,11 +168,12 @@ class zhihuishu_class:
                     except Exception as e:
                         error_msg = str(e).split('\n')[0]
                         print_error(f"题目弹窗关闭发生错误\n{error_msg}")
-        end_time = time.time() + self.watch_time*60
+
+        end_time = time.time() + self.watch_time * 60
         print_true(f"开始观看视频,时长:{self.watch_time}min")
         write_log(f"#{self.username}#开始观看视频")
         time.sleep(10)
-        finish_class=self.driver.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")
+        finish_class = self.driver.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")
         if finish_class:
             # 定位到最后一个已完成视频
             print("开始定位到最后一个已完成视频")
@@ -262,12 +262,69 @@ class zhihuishu_class:
             elif stop.get_attribute('style') != 'display: none;':  # 视频暂停时的处理
                 print("当前视频已暂停，即将自动播放")
                 try:
-                    start_video = self.driver.find_element(By.XPATH, "//div[@class='videoArea']")  # 播放点击的整个显示页面（播放按钮需要显示进度条
+                    start_video = self.driver.find_element(By.XPATH,
+                                                           "//div[@class='videoArea']")  # 播放点击的整个显示页面（播放按钮需要显示进度条
                     start_video.click()
                 except Exception as e:
                     error_msg = str(e).split('\n')[0]
                     print_error(f"自动播放点击出错,即将重试\n{error_msg}")
                     continue
+
+    def watch_meet_live(self):
+        print("正在进行见面课直播任务")
+        live_home_buttons = self.driver.find_elements(By.XPATH, "//li[@class='homeworkExam']")
+        for live_home_button in live_home_buttons:
+            if "见面课" in live_home_button.get_attribute('textContent'):
+                live_home_button_a = live_home_button.find_elements(By.XPATH, "//a[@target='_blank']")
+                live_home_url = live_home_button_a[6].get_attribute('href')
+                self.driver.get(live_home_url)
+                break
+        time.sleep(10)
+        over_live_list = self.driver.find_elements(By.XPATH, "//span[@class='livegreenico_box']/..")
+        if over_live_list:  # 存在已结束的直播视频
+            print(f"存在{len(over_live_list)}个已结束直播")
+            for over_live in over_live_list:
+                over_live_url = "https:" + str(over_live.get_attribute('replaycourseurl'))
+                self.driver.get(over_live_url)
+                time.sleep(15)
+                live_schedule = self.driver.find_elements(By.XPATH, "//div[@class='videoCurrent']")[0]
+                live_name = self.driver.find_elements(By.XPATH, "//h3[@class='video_name']")[0]
+                print_true(f"正在观看直播：{live_name.get_attribute('textContent')}")
+                if int(live_schedule.get_attribute('textContent')[:2]) >= 90:
+                    print_true("直播进度已超过90%,结束观看")
+                    continue
+                else:
+                    print_true(f"直播进度{live_schedule.get_attribute('textContent')}")
+                # 等待视频播放完成
+                print('开始观看')
+                write_log(f"观看直播:{live_name.get_attribute('textContent')}")
+                write_log(f"直播进度{live_schedule.get_attribute('textContent')}")
+                # 在进入时暂停显示错误
+                start_video = self.driver.find_element(By.XPATH, "//div[@class='videoArea']")  # 播放点击的整个显示页面（播放按钮需要显示进度条
+                start_video.click()
+                while True:
+                    time.sleep(5)  # 没有那么大的需求，降低频率
+                    # 获取当前播放状态的一些信息
+                    currentTime = self.driver.find_element(By.XPATH, "//span[@class='currentTime']").get_attribute(
+                        'textContent')  # 视频当前播放时长
+                    duration = self.driver.find_element(By.XPATH, "//span[@class='duration']").get_attribute(
+                        'textContent')  # 视频总时长
+                    stop = self.driver.find_element(By.XPATH, "//div[@class='bigPlayButton pointer']")  # 暂停按钮
+
+                    if currentTime == duration:  # 当前视频播放完成
+                        print_true("当前直播播放完成")
+                        break
+                    elif stop.get_attribute('style') != 'display: none;':  # 视频暂停时的处理
+                        print("当前视频已暂停，即将自动播放")
+                        try:
+                            start_video = self.driver.find_element(By.XPATH,
+                                                                   "//div[@class='videoArea']")  # 播放点击的整个显示页面（播放按钮需要显示进度条
+                            start_video.click()
+                        except Exception as e:
+                            error_msg = str(e).split('\n')[0]
+                            print_error(f"自动播放点击出错\n{error_msg}")
+                            continue
+
 
     def quit_web(self):
         self.driver.quit()
@@ -277,7 +334,7 @@ def main_job():
     global log_path
     log_path = f'./log/{datetime.date.today()}.txt'
     # 读取用户JSON文件
-    with open('users.json', 'r',encoding='utf-8') as file:
+    with open('users.json', 'r', encoding='utf-8') as file:
         data = json.load(file)
     user_json = data
     # 直到所有用户都完成
@@ -309,6 +366,7 @@ def main_job():
                     print_error(f"#{username}#查询课程发生错误")
                     print("运行下一账号")
                     continue
+
                 # 观看视频
                 try:
                     zhihuishu.watch_video()
@@ -322,6 +380,17 @@ def main_job():
                     write_log(f'**ERROR**#{username}#观看视频发生错误')
                     write_log(str(e).split("\n")[0])
 
+                if user_info['watch_live']:
+                    # 观看直播(见面课
+                    try:
+                        zhihuishu.watch_meet_live()
+                        print_true(f"#{username}#完成见面课直播任务！")
+                        write_log(f'#{username}#完成见面课直播任务！')
+                    except Exception as e:
+                        error_msg = str(e).split('\n')[0]
+                        print_error(f"#{username}#观看直播发生错误\n{error_msg}")
+                        write_log(f'**ERROR**#{username}#观看直播发生错误')
+                        write_log(str(e).split("\n")[0])
 
             zhihuishu.quit_web()  # 退出浏览器
 
@@ -330,10 +399,14 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     # 读取并打开文件
     config.read('config.ini', encoding='utf-8')
-    print(f"————每天{config.get('system', 'auto_time')}执行————")
-    # 每天定时执行任务
-    schedule.every().day.at(config.get('system', 'auto_time')).do(main_job)
+    auto_start = config.get('system', 'auto_time')
+    if auto_start != '00:00':
+        print(f"————每天{auto_start}执行————")
+        # 每天定时执行任务
+        schedule.every().day.at(auto_start).do(main_job)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(60)  # 每60秒检查一次任务是否需要执行
+        while True:
+            schedule.run_pending()
+            time.sleep(60)  # 每60秒检查一次任务是否需要执行
+    else:
+        main_job()
