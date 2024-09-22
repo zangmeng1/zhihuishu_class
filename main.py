@@ -183,8 +183,10 @@ class zhihuishu_class:
             # 使用JavaScript滚动到该元素，使其在容器中可见
             self.driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'nearest'});",
                                        last_finish_class)
-            cl_finish_viedo = gundong.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")[-1]
+            # 定位到父级可点击元素.这里存在bug, /../../..大部分账号都可定位，有部分账号定位不到，改为/../..
+            cl_finish_viedo = gundong.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../..")[-1]
             time.sleep(1)
+            input("按回车继续")
             cl_finish_viedo.click()
             print("已切换到最新视频")
             time.sleep(1)
