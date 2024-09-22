@@ -28,10 +28,10 @@ def write_log(msg):
 
 
 class zhihuishu_class:
-    def __init__(self, username):
+    def __init__(self, username,user_info):
         # 初始化日志文件
         if not os.path.exists(log_path):
-            with open(log_path, 'w', encoding='utf-8') as file:
+            with open(log_path, 'w', encoding='UTF-8') as file:
                 file.write("")
         print("——————正在初始化浏览器——————")
         # 初始化 Edge WebDriver
@@ -40,12 +40,9 @@ class zhihuishu_class:
         self.error_printed = False  # 错误信息是否已打印
         self.yidun_printed = False  # 错误信息是否已打印
 
-        # 初始化用户信息
-        with open('users.json', encoding='utf-8') as f:
-            a = json.load(f)[username]
+        self.class_name = None
         self.username = username
-        self.password = a['password']
-        self.watch_time = int(a['watch_time'])
+        self.password = user_info['password']
 
     def login(self):
         print("开始登录智慧树")
@@ -120,6 +117,7 @@ class zhihuishu_class:
                 if class_name in one_class_info_list[0]:
                     print_true(f"课程名:{one_class_info_list[0]} {one_class_info_list[-1]}")
                     write_log(f"课程名:#{one_class_info_list[0]}# {one_class_info_list[-1]}")
+                    self.class_name=one_class_info_list[0]
                     one_class.click()
                     break
             time.sleep(10)
@@ -129,7 +127,7 @@ class zhihuishu_class:
             write_log("**ERROR**未找到有效课程")
             return False
 
-    def watch_video(self):
+    def watch_video(self,watch_time):
         time.sleep(1)
         # 防止元素无法被查找到
         script = "document.body.style.zoom='50%'"  # 不同屏幕分辨率需要不同缩放
@@ -169,8 +167,8 @@ class zhihuishu_class:
                         error_msg = str(e).split('\n')[0]
                         print_error(f"题目弹窗关闭发生错误\n{error_msg}")
 
-        end_time = time.time() + self.watch_time * 60
-        print_true(f"开始观看视频,时长:{self.watch_time}min")
+        end_time = time.time() + watch_time * 60
+        print_true(f"开始观看视频,时长:{watch_time}min")
         write_log(f"#{self.username}#开始观看视频")
         time.sleep(10)
         finish_class = self.driver.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../../..")
@@ -271,14 +269,29 @@ class zhihuishu_class:
                     continue
 
     def watch_meet_live(self):
-        print("正在进行见面课直播任务")
+        print_true("正在进行见面课直播任务")
         live_home_buttons = self.driver.find_elements(By.XPATH, "//li[@class='homeworkExam']")
+        print(f"开始定位见面课按钮")
         for live_home_button in live_home_buttons:
             if "见面课" in live_home_button.get_attribute('textContent'):
                 live_home_button_a = live_home_button.find_elements(By.XPATH, "//a[@target='_blank']")
                 live_home_url = live_home_button_a[6].get_attribute('href')
                 self.driver.get(live_home_url)
+                print(f"已定位到见面课直播,即将打开链接:{live_home_url}")
                 break
+            elif live_home_button == live_home_buttons[-1]:
+                print_error("本节课没有见面课直播")
+                # 读取JSON文件
+                with open('users.json', 'r',encoding='utf-8') as file:
+                    data = json.load(file)
+                # 修改数据
+                for i,class_info in enumerate(data[self.username]['class']):
+                    if class_info['class_name'] == self.class_name:
+                        data[self.username]['class'][i]['watch_live'] = 0
+                # 写回文件
+                with open('users.json', 'w',encoding='utf-8') as file:
+                    json.dump(data, file, ensure_ascii=False, indent=4)
+                print("已改写本节课JSON数据")
         time.sleep(10)
         over_live_list = self.driver.find_elements(By.XPATH, "//span[@class='livegreenico_box']/..")
         if over_live_list:  # 存在已结束的直播视频
@@ -297,8 +310,7 @@ class zhihuishu_class:
                     print_true(f"直播进度{live_schedule.get_attribute('textContent')}")
                 # 等待视频播放完成
                 print('开始观看')
-                write_log(f"观看直播:{live_name.get_attribute('textContent')}")
-                write_log(f"直播进度{live_schedule.get_attribute('textContent')}")
+                write_log(f"观看直播:{live_name.get_attribute('textContent')},直播进度{live_schedule.get_attribute('textContent')}")
                 # 在进入时暂停显示错误
                 start_video = self.driver.find_element(By.XPATH, "//div[@class='videoArea']")  # 播放点击的整个显示页面（播放按钮需要显示进度条
                 start_video.click()
@@ -324,7 +336,8 @@ class zhihuishu_class:
                             error_msg = str(e).split('\n')[0]
                             print_error(f"自动播放点击出错\n{error_msg}")
                             continue
-
+        else:
+            print("本节课没有已结束的直播")
 
     def quit_web(self):
         self.driver.quit()
@@ -334,14 +347,15 @@ def main_job():
     global log_path
     log_path = f'./log/{datetime.date.today()}.txt'
     # 读取用户JSON文件
-    with open('users.json', 'r', encoding='utf-8') as file:
+    with open('users.json', 'r', encoding='UTF-8') as file:
         data = json.load(file)
     user_json = data
+
     # 直到所有用户都完成
     while user_json != {}:  # 提取和打印键值对
         for username, user_info in list(user_json.items()):
             # 创建浏览器
-            zhihuishu = zhihuishu_class(username)
+            zhihuishu = zhihuishu_class(username,user_info)
             # 登录
             try:
                 if not zhihuishu.login():
@@ -357,9 +371,9 @@ def main_job():
                 print("运行下一账号")
                 continue
             # 处理多课程用户
-            for class_name in user_info['class_name'].split('|'):
+            for class_info in user_info['class']:
                 # 定位课程
-                if zhihuishu.get_class_info(class_name):
+                if zhihuishu.get_class_info(class_info['class_name']):
                     print_true("课程定位成功")
                 else:
                     write_log(f'**ERROR**#{username}#查询课程发生错误')
@@ -369,19 +383,19 @@ def main_job():
 
                 # 观看视频
                 try:
-                    zhihuishu.watch_video()
-                    if class_name == user_info['class_name'].split('|')[-1]:
+                    zhihuishu.watch_video(class_info['watch_time'])
+                    if class_info == user_info['class'][-1]:
                         del user_json[username]  # 去除完成用户
-                    print_true(f"#{username}#完成每日刷课！")
-                    write_log(f'#{username}#完成每日刷课！')
+                    print_true(f"#{username}#完成 {class_info['class_name']} 刷课！")
+                    write_log(f"#{username}#完成 {class_info['class_name']} 刷课！")
                 except Exception as e:
                     error_msg = str(e).split('\n')[0]
                     print_error(f"#{username}#观看视频发生错误\n{error_msg}")
                     write_log(f'**ERROR**#{username}#观看视频发生错误')
                     write_log(str(e).split("\n")[0])
 
-                if user_info['watch_live']:
-                    # 观看直播(见面课
+                # 观看直播(见面课
+                if class_info['watch_live']:
                     try:
                         zhihuishu.watch_meet_live()
                         print_true(f"#{username}#完成见面课直播任务！")
@@ -398,7 +412,7 @@ def main_job():
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     # 读取并打开文件
-    config.read('config.ini', encoding='utf-8')
+    config.read('config.ini', encoding='UTF-8')
     auto_start = config.get('system', 'auto_time')
     if auto_start != '00:00':
         print(f"————每天{auto_start}执行————")
