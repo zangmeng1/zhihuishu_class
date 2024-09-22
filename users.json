@@ -1,14 +1,27 @@
 {
-   "ÕËºÅ1": {
-        "password": "ÃÜÂë",
-        "class_name": "",
+  "è´¦å·1": {
+    "password": "å¯†ç ",
+    "class": [
+      {
+        "class_name": "å¿«ä¹å­¦è‹±è¯­",
         "watch_time": 28,
         "watch_live": 1
+      },
+      {
+        "class_name": "å¿«ä¹å­¦æ•°å­¦",
+        "watch_time": 28,
+        "watch_live": 1
+      }
+    ]
    },
-    "ÕËºÅ2": {
-        "password": "ÃÜÂë",
+  "è´¦å·2": {
+    "password": "å¯†ç ",
+    "class": [
+      {
         "class_name": "",
         "watch_time": 28,
         "watch_live": 1
+      }
+    ]
    }
 }
