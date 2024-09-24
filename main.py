@@ -9,7 +9,7 @@ from yidun import yidun
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
-
+from yunma_yidun import yunma_kongjian
 log_path = f'./log/{datetime.date.today()}.txt'
 
 
@@ -91,11 +91,24 @@ class zhihuishu_class:
                         else:  # 第二次自动行为将等待时间延长3s
                             time.sleep(3)
                 except:
-                    print_error("提取验证码信息出错，等待30s，手动干预")
-                    time.sleep(30)
+                    print_error("提取验证码信息出错，等待5s，手动干预")
+                    yiduns = self.driver.find_elements(By.XPATH,"//span[@class='yidun_tips__text yidun-fallback__tip']")
+                    if len(yiduns) == 2:#存在空间推理验证码
+                        print("存在空间推理验证码")
+                        time.sleep(1)
+                        yidun_miaoshu = self.driver.find_elements(By.XPATH, "//span[@class='yidun_tips__text yidun-fallback__tip']")[1].get_attribute('textContent')
+                        yidun_img_url = self.driver.find_elements(By.XPATH, "//img[@class='yidun_bg-img']")[1]
+                        xyoffset=yunma_kongjian(yidun_img_url.get_attribute('src'),yidun_miaoshu)
+                        yidun_img_click = self.driver.find_elements(By.XPATH,"//div[@class='yidun_panel-placeholder']")[1]
+                        #selenium4.0+基于中心偏移，处理坐标
+                        code_tag_half_width = int(float(yidun_img_url.rect['width']) / 2)
+                        code_tag_half_height = int(float(yidun_img_url.rect['height']) / 2)
+                        ActionChains(self.driver).move_to_element_with_offset(yidun_img_click, xoffset=int(xyoffset[0])-code_tag_half_width, yoffset=int(xyoffset[1])-code_tag_half_height).click().perform()
+                    time.sleep(5)
                     # 检测页面url（用户是否手动进行验证，成功跳转学堂
                     current_url = self.driver.current_url
                     if current_url in "https://www.zhihuishu.com/":
+                        print("错误已排除，进行学堂跳转")
                         self.driver.get("https://onlineweb.zhihuishu.com/onlinestuh5")
 
                 time.sleep(1)
@@ -144,10 +157,18 @@ class zhihuishu_class:
                 yidun_window = self.driver.find_elements(By.XPATH,
                                                          "//div[@class='yidun_popup--light yidun_popup yidun_popup--size-small']")  # 网易易盾
                 if yidun_window and "block" in yidun_window[0].get_attribute('style'):
-                    print_error("易盾拦截！(注：开屏出现易盾说明账号或设备问题很大！)")
-                    write_log(f"**WARRING**#{self.username}#开屏出现易盾,请注意账号和时间")
-                    self.driver.execute_script("arguments[0].style.display = 'none';", yidun_window[0])
-                    print("隐藏易盾")
+                    print_error("存在空间推理验证码！(注：开屏出现易盾说明账号或设备问题很大！)")
+                    write_log(f"**WARRING**#{self.username}#开屏出现空间推理验证码,请注意账号和时间")
+                    time.sleep(1)
+                    yidun_miaoshu = self.driver.find_element(By.XPATH, "//span[@class='yidun_tips__text yidun-fallback__tip']").get_attribute('textContent')
+                    yidun_img_url = self.driver.find_element(By.XPATH, "//img[@class='yidun_bg-img']")
+                    xyoffset = yunma_kongjian(yidun_img_url.get_attribute('src'), yidun_miaoshu)
+                    yidun_img_click = self.driver.find_element(By.XPATH, "//div[@class='yidun_panel-placeholder']")
+                    # selenium4.0+基于中心偏移，处理坐标
+                    code_tag_half_width = int(float(yidun_img_url.rect['width']) / 2)
+                    code_tag_half_height = int(float(yidun_img_url.rect['height']) / 2)
+                    ActionChains(self.driver).move_to_element_with_offset(yidun_img_click, xoffset=int(xyoffset[0]) - code_tag_half_width, yoffset=int(xyoffset[1]) - code_tag_half_height).click().perform()
+                    print("关闭空间推理验证码")
                 # 这里如果上一次弹窗题目没处理干净会卡死，
                 topic_window = self.driver.find_elements(By.XPATH,
                                                          "//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
@@ -186,7 +207,6 @@ class zhihuishu_class:
             # 定位到父级可点击元素.这里存在bug, /../../..大部分账号都可定位，有部分账号定位不到，改为/../..
             cl_finish_viedo = gundong.find_elements(By.XPATH, f"//b[@class='fl time_icofinish']/../..")[-1]
             time.sleep(1)
-            input("按回车继续")
             cl_finish_viedo.click()
             print("已切换到最新视频")
             time.sleep(1)
@@ -201,14 +221,20 @@ class zhihuishu_class:
                 'textContent')  # 视频总时长
             stop = self.driver.find_element(By.XPATH, "//div[@class='bigPlayButton pointer']")  # 暂停按钮
 
-            yidun_window = self.driver.find_elements(By.XPATH,
-                                                     "//div[@class='yidun_popup--light yidun_popup yidun_popup--size-small']")  # 网易易盾
+            yidun_window = self.driver.find_elements(By.XPATH,"//div[@class='yidun_popup--light yidun_popup yidun_popup--size-small']")  # 空间推理验证码
             if yidun_window and "block" in yidun_window[0].get_attribute('style'):
-                print_error("易盾拦截！")
-                if not self.yidun_printed:  # 每个账号仅记录日志一次
-                    write_log(f"**WARRING**#{self.username}#刷课出现易盾,请注意账号和时间（日志仅记录第一次出现）")
-                    self.yidun_printed = True
-                self.driver.execute_script("arguments[0].style.display = 'none';", yidun_window[0])
+                print_error("出现空间推理验证码！")
+                write_log(f"**WARRING**#{self.username}#刷课出现空间推理验证码,请注意账号和时间")
+                time.sleep(1)
+                yidun_miaoshu = self.driver.find_element(By.XPATH,"//span[@class='yidun_tips__text yidun-fallback__tip']").get_attribute('textContent')
+                yidun_img_url = self.driver.find_element(By.XPATH, "//img[@class='yidun_bg-img']")
+                xyoffset = yunma_kongjian(yidun_img_url.get_attribute('src'), yidun_miaoshu)
+                yidun_img_click = self.driver.find_element(By.XPATH, "//div[@class='yidun_panel-placeholder']")
+                # selenium4.0+基于中心偏移，处理坐标
+                code_tag_half_width = int(float(yidun_img_url.rect['width']) / 2)
+                code_tag_half_height = int(float(yidun_img_url.rect['height']) / 2)
+                ActionChains(self.driver).move_to_element_with_offset(yidun_img_click,xoffset=int(xyoffset[0]) - code_tag_half_width,yoffset=int(xyoffset[1]) - code_tag_half_height).click().perform()
+
 
             topic_window = self.driver.find_elements(By.XPATH, "//div[@class='el-dialog__wrapper dialog-test']")  # 弹窗主体
             if topic_window:
