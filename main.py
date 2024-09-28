@@ -143,8 +143,7 @@ class zhihuishu_class:
     def watch_video(self,watch_time):
         time.sleep(1)
         # 防止元素无法被查找到
-        script = "document.body.style.zoom='50%'"  # 不同屏幕分辨率需要不同缩放
-        self.driver.execute_script(script)
+        self.driver.maximize_window()
         for i in range(5):  # 防止页面未刷新完全
             try:
                 start_tip = self.driver.find_element(By.XPATH, "//i[@class='iconfont iconguanbi']")  # 开屏提示
@@ -324,14 +323,19 @@ class zhihuishu_class:
         over_live_list = self.driver.find_elements(By.XPATH, "//span[@class='livegreenico_box']/..")
         if over_live_list:  # 存在已结束的直播视频
             print(f"存在{len(over_live_list)}个已结束直播")
+            live_url_list=[]
+            #提取出所有live地址
             for over_live in over_live_list:
-                over_live_url = "https:" + str(over_live.get_attribute('replaycourseurl'))
+                live_url_list.append(over_live.get_attribute('replaycourseurl'))
+            #遍历完成live任务
+            for live_url in live_url_list:
+                over_live_url = "https:" + str(live_url)
                 self.driver.get(over_live_url)
                 time.sleep(15)
                 live_schedule = self.driver.find_elements(By.XPATH, "//div[@class='videoCurrent']")[0]
                 live_name = self.driver.find_elements(By.XPATH, "//h3[@class='video_name']")[0]
                 print_true(f"正在观看直播：{live_name.get_attribute('textContent')}")
-                if int(live_schedule.get_attribute('textContent')[:2]) >= 90:
+                if int(live_schedule.get_attribute('textContent')[:-1]) >= 90:
                     print_true("直播进度已超过90%,结束观看")
                     continue
                 else:
